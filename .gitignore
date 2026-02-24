@@ -1,0 +1,10 @@
+bin
+lib
+lib64
+include
+*cache
+.gitmodules
+.git
+pyvenv.cfg
+*.lck
+*-backups
