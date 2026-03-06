@@ -85,10 +85,10 @@ module genHalfLayer(depth, tracks, vias, pads, zones, slop) {
 module genDrills(thickness, depth, vias, pads) {
 	h = thickness+depth*2+0.02;
 	for(via=vias) {
-		if(via[0]) move(via[1])  cylinder(h=h,r=via[3]/2, anchor=BOTTOM);
+		if(via[0]) move(via[1])  cylinder(h=h,r=via[3]/2+get_slop(), anchor=BOTTOM);
 	}
 	for(pad=pads) {
-		if(pad[0]) move(pad[2]) rot(pad[3]) prismoid(size1=pad[4],size2=pad[4],h=h,rounding=min(pad[4])/2,anchor=BOTTOM);
+		if(pad[0]) move(pad[2]) rot(pad[3]) prismoid(size1=pad[4]+[2*get_slop(),0],size2=pad[4]+[2*get_slop(),0],h=h,rounding=min(pad[4])/2,anchor=BOTTOM);
 	}
 }
 
