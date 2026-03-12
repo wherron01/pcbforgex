@@ -5,7 +5,7 @@ import enum
 import subprocess
 import re
 
-parser = argparse.ArgumentParser(description="Returns an OpenSCAD document to 3D print your active KiCAD PCB", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description="Outputs a 3D printable die for your active KiCAD PCB, rendered with OpenSCAD", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-fa", type=float, default=5, help="Angle step for rendering curves")
 parser.add_argument("-fs", type=float, default=0.1, help="Minimum size for rendering curves")
 parser.add_argument("--slop", type=float, default=0.1, help="Your 3D printer tolerance -- parts printed this distance apart should fit together snugly")
@@ -14,8 +14,7 @@ parser.add_argument("--thickness", type=float, default=1, help="Dielectric thick
 parser.add_argument("--spacing", type=float, default=2, help="Space between board layers in export")
 parser.add_argument("--output", type=str,default="output.stl", help="Output filename with desired extension for export.  Supports everything OpenSCAD does plus scad itself and - for stdout")
 parser.add_argument("--flip", action="store_true", help="Turn mold inside out -- punch on top and die on bottom. Useful for SMT components on the top layer")
-parser.add_argument("--no-drill-btm", action="store_true", help="Don't extend bottom layer drills out of the board")
-parser.add_argument("--no-drill-top", action="store_true", help="Don't xtend top layer drills out of the board")
+parser.add_argument("--no-drill-ends", action="store_true", help="Don't extend top and bottom layer drills to the layer caps")
 parser.add_argument("--separate", action="store_true", help="Export each layer as its own file")
 parser.add_argument("--no-mirror", action="store_true", help="Don't mirror the board to match KiCAD.  You usually never want this")
 args = parser.parse_args()
@@ -254,6 +253,8 @@ if args.separate:
         p2 = "[]"
         z2 = "[]"
 
+        force_drills = "false" if args.no_drill_ends or (i > 0 and i < len(layers)) else "true" 
+        
         if i > 0:
             t1 = tracks[i-1]
             v1 = vias[i-1]
@@ -269,6 +270,7 @@ if args.separate:
         layerstr = None
         if filename != None:
             layerstr = filename + "/" + topstr + "-" + btmstr 
-        outp(header+mirror+"genLayer("+outline+","+str(args.thickness)+","+str(args.cut_depth)+","+t1+","+t2+","+v1+","+v2+","+p1+","+p2+","+z1+","+z2+","+str(flip)+",$fa="+str(args.fa)+",$fs="+str(args.fs)+",$slop="+str(args.slop)+");", layerstr, extension)
+            
+        outp(header+mirror+"genLayer("+outline+","+str(args.thickness)+","+str(args.cut_depth)+","+t1+","+t2+","+v1+","+v2+","+p1+","+p2+","+z1+","+z2+","+str(flip)+", "+force_drills+",$fa="+str(args.fa)+",$fs="+str(args.fs)+",$slop="+str(args.slop)+");", layerstr, extension)
 else:
-    outp(header+ "$fa="+str(args.fa)+";\n$fs="+str(args.fs)+";\n$slop="+str(args.slop)+";\n\n""\ndepth="+str(args.cut_depth)+";\nthickness="+str(args.thickness)+";\noutline="+outline+";\ntracks=[[],"+",".join(tracks)+",[]];\nvias=[[],"+",".join(vias)+",[]];\npads=[[],"+",".join(pads)+",[]];\nzones=[[],"+",".join(zones)+",[]];\n\nline_copies(spacing=[0,0,-("+str(args.spacing)+"+thickness+2*depth)], n="+str(len(layers)+1)+") "+mirror+"genLayer(outline, thickness, depth, tracks[$idx], tracks[$idx+1], vias[$idx], vias[$idx+1], pads[$idx], pads[$idx+1], zones[$idx], zones[$idx+1], "+str(flip)+");", filename, extension)
+    outp(header+ "$fa="+str(args.fa)+";\n$fs="+str(args.fs)+";\n$slop="+str(args.slop)+";\n\n""\ndepth="+str(args.cut_depth)+";\nthickness="+str(args.thickness)+";\noutline="+outline+";\ntracks=[[],"+",".join(tracks)+",[]];\nvias=[[],"+",".join(vias)+",[]];\npads=[[],"+",".join(pads)+",[]];\nzones=[[],"+",".join(zones)+",[]];\n\nline_copies(spacing=[0,0,-("+str(args.spacing)+"+thickness+2*depth)], n="+str(len(layers)+1)+") "+mirror+"genLayer(outline, thickness, depth, tracks[$idx], tracks[$idx+1], vias[$idx], vias[$idx+1], pads[$idx], pads[$idx+1], zones[$idx], zones[$idx+1], "+str(flip)+", "+("false" if args.no_drill_ends else ("$idx == 0 || $idx == " + str(len(layers))))+");", filename, extension)

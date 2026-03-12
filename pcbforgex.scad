@@ -19,17 +19,10 @@ module genBtm(flip=1,depth) {
 	};
 }
 
-module genThruHole(depth) {
-	position(BOTTOM) down(depth+0.01) tag("remove") { children(); };
-}
-
-module posCylinder(pos, h, r, add_slop) {
-	move(pos) cylinder(h=h,r=r+(add_slop*get_slop()),anchor=BOTTOM);
-}
-
-module posPrismoid(pos, angle, size, depth, chamfer, fillet, add_slop) {
-	s = add_scalar(size,add_slop*get_slop()*2);
-	move(pos) zrot(angle) prismoid(size1=s,size2=s,h=depth,chamfer=chamfer*min(s),rounding=fillet*min(s),anchor=BOTTOM); 
+module genThruHole(flip=1,depth) {
+	position(BOTTOM) tag("remove") down(0.01) { 
+		down(flip > 0 ? depth : 0) children(); 
+	};
 }
 
 module slopRegion(points,slop) {
@@ -82,20 +75,29 @@ module genHalfLayer(depth, tracks, vias, pads, zones, slop) {
 	genZones(depth, zones, slop);
 }
 
-module genDrills(thickness, depth, vias, pads) {
+module genDrills(thickness, depth, vias, pads, force, forced_vias, forced_pads) {
 	h = thickness+depth*2+0.02;
+	slopvec = [2*get_slop(),2*get_slop()];
 	for(via=vias) {
-		if(via[0]) move(via[1])  cylinder(h=h,r=via[3]/2+get_slop(), anchor=BOTTOM);
+		if(via[0] || force) move(via[1])  cylinder(h=h,r=via[3]/2+get_slop(), anchor=BOTTOM);
 	}
 	for(pad=pads) {
-		if(pad[0]) move(pad[2]) rot(pad[3]) prismoid(size1=pad[4]+[2*get_slop(),0],size2=pad[4]+[2*get_slop(),0],h=h,rounding=min(pad[4])/2,anchor=BOTTOM);
+		if((pad[0] || force) && pad[4] != [0,0]) move(pad[2]) rot(pad[3]) prismoid(size1=pad[4]+slopvec,size2=pad[4]+slopvec,h=h,rounding=min(pad[4]+slopvec)/2,anchor=BOTTOM);
+	}
+	if(force) {
+		for(via=forced_vias) {
+			move(via[1])  cylinder(h=h,r=via[3]/2+get_slop(), anchor=BOTTOM);
+		}
+		for(pad=forced_pads) {
+			if(pad[4] != [0,0]) move(pad[2]) rot(pad[3]) prismoid(size1=pad[4]+slopvec,size2=pad[4]+slopvec,h=h,rounding=min(pad[4]+slopvec)/2,anchor=BOTTOM);
+		}
 	}
 }
 
-module genLayer(outline, thickness, depth, tracks1, tracks2, vias1, vias2, pads1, pads2, zones1, zones2, flip) {
+module genLayer(outline, thickness, depth, tracks1, tracks2, vias1, vias2, pads1, pads2, zones1, zones2, flip, force_drill) {
 	diff() body(thickness, depth, outline) {
 		genTop(flip, depth) genHalfLayer(depth, tracks1, vias1, pads1, zones1, flip);
 		genBtm(flip, depth) genHalfLayer(depth, tracks2, vias2, pads2, zones2, flip*-1);
-		genThruHole(depth) genDrills(thickness, depth, vias1, pads1);
+		genThruHole(flip, depth) genDrills(thickness, depth, vias1, pads1, force_drill, vias2, pads2);
 	}
 }
