@@ -40,11 +40,13 @@ To use the generated models:
 4. Remove the copper from the negative parts of the layer,
 5. Repeat steps 1-4 for each layer,
 6. Put the layers back together,
-7. Assemble components onto the completed board.  
+7. Assemble components onto the completed board.
+
 This method has several advantages over traditional solutions:
 1. It can generate as many layers as you want. 50 layer PCB at home? Easy.
 2. THT assembly can be solderless, by using the leads to punch through the copper tape.
 3. It only uses inexpensive consumables and tools that most hobbyists already have.
+
 The script works on your active PCB document, so you must have it open in KiCAD.
 This is because for some reason KiCAD decided to remove API support for their files. 
 They now only support IPC with a running KiCAD process. 
