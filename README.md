@@ -33,7 +33,7 @@ options:
   --no-mirror           Don't mirror the board to match KiCAD. You usually
                         never want this (default: False)
 ```
-To use the generated models:
+### To use the generated models:
 1. Place copper tape over one half of the first layer,
 2. Press the other half of the same layer into it to shear the copper,
 3. Separate the two halves,
@@ -42,7 +42,7 @@ To use the generated models:
 6. Put the layers back together,
 7. Assemble components onto the completed board.
 
-This method has several advantages over traditional solutions:
+### This method has several advantages over traditional solutions:
 1. It can generate as many layers as you want. 50 layer PCB at home? Easy.
 2. THT assembly can be solderless, by using the leads to punch through the copper tape.
 3. It only uses inexpensive consumables and tools that most hobbyists already have.
